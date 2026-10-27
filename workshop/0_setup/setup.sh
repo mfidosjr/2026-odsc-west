@@ -19,17 +19,17 @@ function start_mem0() {
         return 1
     fi
 
-    echo -n "Validating OpenAI API Key with gpt-5.4-mini"
+    echo -n "Validating API Key with ${OPENAI_MODEL:-gpt-5.4-mini}"
     
     # Capture both the response body and the HTTP status code
     local response
-    response=$(curl -s -w "\n%{http_code}" https://api.openai.com/v1/chat/completions \
+    response=$(curl -s -w "\n%{http_code}" ${OPENAI_BASE_URL:-https://api.openai.com/v1}/chat/completions \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer ${OPENAI_API_KEY}" \
         -d '{
-            "model": "gpt-5.4-mini",
+            "model": "'"${OPENAI_MODEL:-gpt-5.4-mini}"'",
             "messages": [{"role": "user", "content": "Ping"}],
-            "max_completion_tokens": 5
+            "max_completion_tokens": 50
         }')
 
     # Extract status code from the last line, and the JSON body from the rest
@@ -62,7 +62,9 @@ function start_mem0() {
     }
 
     update_env "POSTGRES_PASSWORD" "postgrespostgres"
-    update_env "MEM0_DEFAULT_LLM_MODEL" "gpt-5.4-mini"
+    update_env "MEM0_DEFAULT_LLM_MODEL" "${MEM0_DEFAULT_LLM_MODEL:-gpt-5.4-mini}"
+    [[ -n "${MEM0_DEFAULT_EMBEDDER_MODEL}" ]] && update_env "MEM0_DEFAULT_EMBEDDER_MODEL" "${MEM0_DEFAULT_EMBEDDER_MODEL}"
+    [[ -n "${OPENAI_BASE_URL}" ]] && update_env "OPENAI_BASE_URL" "${OPENAI_BASE_URL}" && update_env "OPENAI_API_BASE" "${OPENAI_BASE_URL}"
     update_env "POSTGRES_HOST" "postgres"
     
     local jwt_secret
